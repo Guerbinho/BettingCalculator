@@ -1,0 +1,171 @@
+import requests
+standing_url = "https://fbref.com/en/comps/20/Bundesliga-Stats"
+data = requests.get(standing_url)
+data.text
+from bs4 import BeautifulSoup
+soup = BeautifulSoup(data.text)
+standing_table = soup.select("table.stats_table")[0]
+standing_table
+links  = standing_table.find_all("a")
+links
+
+links = [l.get("href") for l in links]
+links
+links = [l for l in links if '/squads/' in l]
+links
+team_urls = [f"https://fbref.com{l}" for l in links]
+team_urls
+team_url = team_urls[5]
+data = requests.get(team_url)
+data.text
+
+import pandas as pd
+matches = pd.read_html(data.text, match = "Scores & Fixtures")
+matches
+
+matches[0].head()
+soup = BeautifulSoup(data.text)
+links = soup.find_all("a")
+links = [l.get("href") for l in links]
+links = [l for l in links if l and "all_comps/keeper/" in l]
+links
+data = requests.get(f"https://fbref.com{links[0]}")
+data.text
+
+links2 = soup.find_all("a")
+links2 = [l2.get("href") for l2 in links2]
+links2 = [l2 for l2 in links2 if l2 and "all_comps/passing_types/" in l2]
+data2 = requests.get(f"https://fbref.com{links2[0]}")
+data2.text
+
+links3 = soup.find_all("a")
+links3 = [l3.get("href") for l3 in links3]
+links3 = [l3 for l3 in links3 if l3 and "all_comps/misc/" in l3]
+data3 = requests.get(f"https://fbref.com{links3[0]}")
+data3.text
+
+teamGoalKicks = pd.read_html(data.text, match = "Goalkeeping")[0]
+oppGoalKicks = pd.read_html(data.text, match = "Goalkeeping")[1]
+teamGoalKicks.head()
+oppGoalKicks.head()
+
+teampassing = pd.read_html(data2.text, match = "Pass Types")[0]
+opppassing = pd.read_html(data2.text, match = "Pass Types")[1]
+teampassing.head()
+opppassing.head()
+
+teammisc = pd.read_html(data3.text, match = "Miscellaneous Stats")[0]
+oppmisc = pd.read_html(data3.text, match = "Miscellaneous Stats")[1]
+teammisc.head()
+oppmisc.head()
+
+oppGoalKicks.columns = oppGoalKicks.columns.droplevel()
+oppGoalKicks.head()
+teamGoalKicks.columns = teamGoalKicks.columns.droplevel()
+teamGoalKicks.head()
+
+
+opppassing.columns = opppassing.columns.droplevel()
+opppassing.head()
+teampassing.columns = teampassing.columns.droplevel()
+teampassing.head()
+
+oppmisc.columns = oppmisc.columns.droplevel()
+oppmisc.head()
+teammisc.columns = teammisc.columns.droplevel()
+teammisc.head()
+
+team_data = matches[0].merge(teamGoalKicks[["Date", "Att"]], on = "Date").merge(oppGoalKicks[["Date", "Att"]], on = "Date").merge(teampassing[["Date", "Crs", "TI", "CK", "Off"]], on = "Date").merge(opppassing[["Date","Crs", "TI", "CK", "Off"]], on = "Date").merge(teammisc[["Date", "CrdY", "CrdR", "2CrdY", "Int", "TklW", "PKwon"]], on = "Date").merge(oppmisc[["Date", "CrdY", "CrdR", "2CrdY", "Int", "TklW", "PKwon"]], on = "Date")
+team_data.head()
+
+years = list(range(2023,2022,-1))
+years
+
+
+all_matches = []
+standing_url = "https://fbref.com/en/comps/20/Bundesliga-Stats"
+
+for year in years:
+    data = requests.get(standing_url)
+    soup = BeautifulSoup(data.text)
+    standing_table = soup.select("table.stats_table")[0]
+    
+    links = standing_table.find_all("a")
+    links = [l.get("href") for l in links]
+    links = [l for l in links if '/squads/' in l]
+    team_urls = [f"https://fbref.com{l}" for l in links]
+team_urls
+
+team_urls[5].split("/")[-1].replace("-Stats", "")
+team_urls[5].split("/")[-1].replace("-Stats", "").replace("-"," ")
+
+import time
+for year in years:
+    data = requests.get(standing_url)
+    soup = BeautifulSoup(data.text)
+    standing_table = soup.select("table.stats_table")[0]
+    
+    links = standing_table.find_all("a")
+    links = [l.get("href") for l in links]
+    links = [l for l in links if '/squads/' in l]
+    team_urls = [f"https://fbref.com{l}" for l in links]
+    
+    for team_url in team_urls:
+        team_name = team_url.split("/")[-1].replace("-Stats", "").replace("-"," ")
+        
+        data = requests.get(team_url)
+        matches = pd.read_html(data.text, match= "Scores & Fixtures")[0]
+        
+        soup = BeautifulSoup(data.text)
+        links = soup.find_all("a")
+        links = [l.get("href") for l in links]
+        links = [l for l in links if l and 'all_comps/keeper' in l]
+        
+        
+        links2 = soup.find_all("a")
+        links2 = [l2.get("href") for l2 in links2]
+        links2 = [l2 for l2 in links2 if l2 and 'all_comps/passing_types' in l2]
+        
+        links3 = soup.find_all("a")
+        links3 = [l3.get("href") for l3 in links3]
+        links3 = [l3 for l3 in links3 if l3 and 'all_comps/misc' in l3]
+        
+        data = requests.get(f"https://fbref.com{links[0]}")
+        teamGoalKicks = pd.read_html(data.text, match = "Goalkeeping")[0]
+        teamGoalKicks.columns = teamGoalKicks.columns.droplevel()
+        oppGoalKicks = pd.read_html(data.text, match = "Goalkeeping")[1]
+        oppGoalKicks.columns = oppGoalKicks.columns.droplevel()
+              
+        data2 = requests.get(f"https://fbref.com{links2[0]}")
+        teampassing = pd.read_html(data2.text, match = "Pass Types")[0]
+        teampassing.columns = teampassing.columns.droplevel()
+        opppassing = pd.read_html(data2.text, match = "Pass Types")[1]
+        opppassing.columns = opppassing.columns.droplevel()
+                       
+        data3 = requests.get(f"https://fbref.com{links3[0]}")
+        teammisc = pd.read_html(data3.text, match = "Miscellaneous Stats")[0]
+        teammisc.columns = teammisc.columns.droplevel()
+        oppmisc = pd.read_html(data3.text, match = "Miscellaneous Stats")[1]
+        oppmisc.columns = oppmisc.columns.droplevel()
+                         
+        try:
+            team_data = matches.merge(teampassing[["Date", "Crs", "TI", "CK", "Off"]], on = "Date").merge(opppassing[["Date", "Crs", "TI", "CK", "Off"]], on = "Date").merge(teamGoalKicks[["Date", "Att"]], on = "Date").merge(oppGoalKicks[["Date", "Att"]], on = "Date").merge(teammisc[["Date", "CrdY", "CrdR", "2CrdY", "Int", "TklW", "PKwon"]], on = "Date").merge(oppmisc[["Date", "CrdY", "CrdR", "2CrdY", "Int", "TklW", "PKwon"]], on = "Date")
+       
+        except ValueError:
+            continue
+            
+        team_data = team_data[team_data["Comp"] == "Bundesliga"]
+        team_data["Season"] = year
+        team_data["Team"] = team_name
+        all_matches.append(team_data)
+        time.sleep(10)
+        
+match_df = pd.concat(all_matches)
+
+match_df.columns = [c.lower() for c in match_df.columns]
+
+match_df.to_csv("Ger1.csv")
+match_df
+
+
+
